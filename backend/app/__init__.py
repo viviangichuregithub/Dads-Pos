@@ -24,7 +24,7 @@ def create_app():
 
     # Import models so Alembic detects them
     from app.models.user import User
-    from app.models.employee import Employee  # 👈 employee model
+    from app.models.employee import Employee  
 
     # User loader for flask-login
     @login_manager.user_loader
@@ -33,9 +33,8 @@ def create_app():
 
     # Register blueprints
     from app.routes.auth import auth_bp
-    from app.routes.employees import employees_bp  # 👈 employees blueprint
+    from app.routes.employees import employees_bp 
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
-    app.register_blueprint(employees_bp)  # uses /employees from blueprint
-
+    app.register_blueprint(employees_bp)  
     return app
