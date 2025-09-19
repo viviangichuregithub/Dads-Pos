@@ -1,11 +1,10 @@
 from datetime import datetime
 from app.extensions import db
 
-class Sale(db.Model):
-    __tablename__ = "sales"
+class Expense(db.Model):
+    __tablename__ = "expenses"
 
     id = db.Column(db.Integer, primary_key=True)
-    item_name = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.String(255))
     amount = db.Column(db.Float, nullable=False)
-    payment_method = db.Column(db.String(50), nullable=False)  # cash, mpesa, paybill
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

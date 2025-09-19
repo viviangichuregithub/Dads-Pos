@@ -3,6 +3,7 @@ from flask_cors import CORS
 from .config import Config
 from .extensions import db, migrate, bcrypt, login_manager
 
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -23,6 +24,7 @@ def create_app():
 
     # Import models so Alembic detects them
     from app.models.user import User
+    from app.models.employee import Employee  # 👈 employee model
 
     # User loader for flask-login
     @login_manager.user_loader
@@ -31,6 +33,9 @@ def create_app():
 
     # Register blueprints
     from app.routes.auth import auth_bp
+    from app.routes.employees import employees_bp  # 👈 employees blueprint
+
     app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(employees_bp)  # uses /employees from blueprint
 
     return app
