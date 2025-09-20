@@ -1,7 +1,9 @@
 # app/routes/inventory_routes.py
 from flask import Blueprint, request, jsonify, send_file
 from app.models.inventory import Inventory
+from app.models.inventoryaudit import InventoryAudit
 from app.extensions import db
+from flask_login import current_user
 import pandas as pd
 from io import BytesIO
 
@@ -15,7 +17,7 @@ def get_inventory():
     search = request.args.get("name")
     try:
         page = int(request.args.get("page", 1))
-        per_page = int(request.args.get("per_page", 10))  # default 10 items per page
+        per_page = int(request.args.get("per_page", 10))
     except ValueError:
         return jsonify({"error": "Invalid pagination parameters"}), 400
 
@@ -36,6 +38,7 @@ def get_inventory():
 
     return jsonify(response), 200
 
+
 # --------------------------
 # POST /inventory → add new shoe
 # --------------------------
@@ -46,9 +49,23 @@ def add_shoe():
         return jsonify({"error": "Missing fields"}), 400
 
     shoe = Inventory.query.filter_by(name=data["name"]).first()
+    audits = []
+
     if shoe:
+        old_quantity = shoe.quantity
         shoe.quantity += int(data["quantity"])
         shoe.price = float(data["price"])
+
+        audits.append(
+            InventoryAudit(
+                inventory_id=shoe.id,
+                action="UPDATE",
+                field_changed="quantity",
+                old_value=str(old_quantity),
+                new_value=str(shoe.quantity),
+                user_id=current_user.id if current_user else None
+            )
+        )
     else:
         shoe = Inventory(
             name=data["name"],
@@ -56,9 +73,23 @@ def add_shoe():
             quantity=int(data["quantity"])
         )
         db.session.add(shoe)
+        db.session.flush()  # get ID before commit
 
+        audits.append(
+            InventoryAudit(
+                inventory_id=shoe.id,
+                action="CREATE",
+                field_changed="record",
+                old_value=None,
+                new_value=f"Added {shoe.quantity}",
+                user_id=current_user.id if current_user else None
+            )
+        )
+
+    db.session.add_all(audits)
     db.session.commit()
     return jsonify(shoe.to_dict()), 201
+
 
 # --------------------------
 # PATCH /inventory/<id> → update shoe
@@ -67,11 +98,36 @@ def add_shoe():
 def update_shoe(id):
     shoe = Inventory.query.get_or_404(id)
     data = request.json
-    shoe.name = data.get("name", shoe.name)
-    shoe.price = float(data.get("price", shoe.price))
-    shoe.quantity = int(data.get("quantity", shoe.quantity))
-    db.session.commit()
-    return jsonify(shoe.to_dict()), 200
+
+    audits = []
+    fields_to_check = ["name", "price", "quantity"]
+    changes_made = False
+
+    for field in fields_to_check:
+        if field in data:
+            old_val = getattr(shoe, field)
+            new_val = data[field]
+            if str(old_val) != str(new_val):
+                setattr(shoe, field, new_val)
+                audits.append(
+                    InventoryAudit(
+                        inventory_id=shoe.id,
+                        action="UPDATE",
+                        field_changed=field,
+                        old_value=str(old_val),
+                        new_value=str(new_val),
+                        user_id=current_user.id if current_user else None
+                    )
+                )
+                changes_made = True
+
+    if changes_made:
+        db.session.add_all(audits)
+        db.session.commit()
+        return jsonify(shoe.to_dict()), 200
+    else:
+        return jsonify({"message": "No changes detected"}), 200
+
 
 # --------------------------
 # DELETE /inventory/<id> → delete shoe
@@ -79,9 +135,20 @@ def update_shoe(id):
 @inventory_bp.route("/<int:id>", methods=["DELETE"])
 def delete_shoe(id):
     shoe = Inventory.query.get_or_404(id)
+
+    audit = InventoryAudit(
+        inventory_id=shoe.id,
+        action="DELETE",
+        field_changed="record",
+        old_value=str(shoe.to_dict()),
+        new_value=None,
+        user_id=current_user.id if current_user else None
+    )
+    db.session.add(audit)
     db.session.delete(shoe)
     db.session.commit()
     return jsonify({"message": "Deleted"}), 200
+
 
 # --------------------------
 # POST /inventory/import/excel → import Excel
@@ -93,6 +160,8 @@ def import_excel():
         return jsonify({"error": "No file uploaded"}), 400
     try:
         df = pd.read_excel(file)
+        audits = []
+
         for _, row in df.iterrows():
             name = row.get("name")
             price = row.get("price")
@@ -101,16 +170,41 @@ def import_excel():
                 continue
             shoe = Inventory.query.filter_by(name=name).first()
             if shoe:
+                old_quantity = shoe.quantity
                 shoe.quantity += int(quantity)
                 shoe.price = float(price)
-            else:
-                db.session.add(
-                    Inventory(name=name, price=float(price), quantity=int(quantity))
+
+                audits.append(
+                    InventoryAudit(
+                        inventory_id=shoe.id,
+                        action="UPDATE",
+                        field_changed="quantity",
+                        old_value=str(old_quantity),
+                        new_value=str(shoe.quantity),
+                        user_id=current_user.id if current_user else None
+                    )
                 )
+            else:
+                new_shoe = Inventory(name=name, price=float(price), quantity=int(quantity))
+                db.session.add(new_shoe)
+                db.session.flush()
+                audits.append(
+                    InventoryAudit(
+                        inventory_id=new_shoe.id,
+                        action="CREATE",
+                        field_changed="record",
+                        old_value=None,
+                        new_value=f"Added {new_shoe.quantity}",
+                        user_id=current_user.id if current_user else None
+                    )
+                )
+
+        db.session.add_all(audits)
         db.session.commit()
         return jsonify({"message": "Inventory imported successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
 
 # --------------------------
 # GET /inventory/export/<file_type> → export Excel or PDF
@@ -128,7 +222,7 @@ def export_inventory(file_type):
         return send_file(output, download_name="inventory.xlsx", as_attachment=True)
 
     elif file_type.lower() == "pdf":
-        # Temporary PDF placeholder using CSV
+        # Placeholder for proper PDF export, currently CSV
         df = df[["name", "price", "quantity"]]
         df.to_csv(output, index=False)
         output.seek(0)
