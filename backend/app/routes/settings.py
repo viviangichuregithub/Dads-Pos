@@ -3,8 +3,8 @@ from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 from app.extensions import db
 from app.models.user import User
-from app.models.inventoryaudit import InventoryAudit   # ✅ added import
-from datetime import datetime                          # ✅ for date parsing
+from app.models.inventoryaudit import InventoryAudit
+from datetime import datetime
 
 settings_bp = Blueprint("settings", __name__)
 
@@ -19,13 +19,19 @@ def manage_profile():
             "id": current_user.id,
             "name": current_user.name,
             "email": current_user.email,
+            "phone_number": current_user.phone_number,
             "role": current_user.role,
+            "avatar": current_user.avatar,
+            "gender": current_user.gender
         })
 
     if request.method == "PUT":
         data = request.json
         current_user.name = data.get("name", current_user.name)
         current_user.email = data.get("email", current_user.email)
+        current_user.avatar = data.get("avatar", current_user.avatar)
+        current_user.gender = data.get("gender", current_user.gender)
+        current_user.phone_number = data.get("phone_number", current_user.phone_number)
         db.session.commit()
         return jsonify({"message": "Profile updated successfully"}), 200
 
@@ -75,30 +81,29 @@ def delete_user(user_id):
 
 
 # -----------------------------
-# Preferences (Theme, notifications, etc.)
+# Preferences (Theme, notifications)
 # -----------------------------
 @settings_bp.route("/preferences", methods=["GET", "PUT"])
 @login_required
 def preferences():
-    prefs = current_user.preferences
-
-    # Create default preferences if none exist
-    if not prefs:
-        prefs = UserPreferences(user_id=current_user.id)
-        db.session.add(prefs)
-        db.session.commit()
-
+    # Store preferences directly in User table
     if request.method == "GET":
-        return jsonify(prefs.to_dict())
+        return jsonify({
+            "theme": current_user.theme,
+            "notifications": current_user.notifications
+        })
 
     if request.method == "PUT":
         data = request.json
-        prefs.theme = data.get("theme", prefs.theme)
-        prefs.notifications = data.get("notifications", prefs.notifications)
+        current_user.theme = data.get("theme", current_user.theme)
+        current_user.notifications = data.get("notifications", current_user.notifications)
         db.session.commit()
         return jsonify({
             "message": "Preferences updated",
-            "preferences": prefs.to_dict()
+            "preferences": {
+                "theme": current_user.theme,
+                "notifications": current_user.notifications
+            }
         })
 
 
@@ -108,22 +113,16 @@ def preferences():
 @settings_bp.route("/inventory-audit", methods=["GET"])
 @login_required
 def get_inventory_audit():
-    """
-    Get inventory audit logs for a specific date.
-    Example: /inventory-audit?date=2025-09-20
-    """
     date_str = request.args.get("date")
 
     if not date_str:
         return jsonify({"error": "Missing 'date' parameter"}), 400
 
     try:
-        # Parse YYYY-MM-DD safely
         query_date = datetime.strptime(date_str, "%Y-%m-%d").date()
     except ValueError:
         return jsonify({"error": "Invalid date format, expected YYYY-MM-DD"}), 400
 
-    # Query logs for that date
     logs = (
         InventoryAudit.query
         .filter(db.func.date(InventoryAudit.timestamp) == query_date)
@@ -131,7 +130,6 @@ def get_inventory_audit():
         .all()
     )
 
-    # Aggregate counts by action type
     action_summary = {}
     for log in logs:
         action_summary[log.action] = action_summary.get(log.action, 0) + 1
@@ -139,6 +137,6 @@ def get_inventory_audit():
     return jsonify({
         "date": query_date.isoformat(),
         "total": len(logs),
-        "by_action": action_summary,  # e.g. {"CREATE": 3, "UPDATE": 5, "DELETE": 2}
+        "by_action": action_summary,
         "logs": [log.to_dict() for log in logs]
     }), 200
