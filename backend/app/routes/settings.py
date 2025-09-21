@@ -4,7 +4,8 @@ from flask_login import login_required, current_user
 from app.extensions import db
 from app.models.user import User
 from app.models.inventoryaudit import InventoryAudit
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+import pytz
 
 settings_bp = Blueprint("settings", __name__)
 
@@ -80,32 +81,6 @@ def delete_user(user_id):
     return jsonify({"message": "User deleted successfully"}), 200
 
 
-# -----------------------------
-# Preferences (Theme, notifications)
-# -----------------------------
-@settings_bp.route("/preferences", methods=["GET", "PUT"])
-@login_required
-def preferences():
-    # Store preferences directly in User table
-    if request.method == "GET":
-        return jsonify({
-            "theme": current_user.theme,
-            "notifications": current_user.notifications
-        })
-
-    if request.method == "PUT":
-        data = request.json
-        current_user.theme = data.get("theme", current_user.theme)
-        current_user.notifications = data.get("notifications", current_user.notifications)
-        db.session.commit()
-        return jsonify({
-            "message": "Preferences updated",
-            "preferences": {
-                "theme": current_user.theme,
-                "notifications": current_user.notifications
-            }
-        })
-
 
 # -----------------------------
 # Inventory Audit Logs
@@ -119,13 +94,22 @@ def get_inventory_audit():
         return jsonify({"error": "Missing 'date' parameter"}), 400
 
     try:
-        query_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        # Client sends date in local time (Kenya UTC+3)
+        local_date = datetime.strptime(date_str, "%Y-%m-%d").date()
     except ValueError:
         return jsonify({"error": "Invalid date format, expected YYYY-MM-DD"}), 400
 
+    # Define Kenya timezone
+    kenya_tz = pytz.timezone("Africa/Nairobi")
+    
+    # Start and end of the day in UTC
+    start_utc = kenya_tz.localize(datetime.combine(local_date, datetime.min.time())).astimezone(pytz.UTC)
+    end_utc = kenya_tz.localize(datetime.combine(local_date, datetime.max.time())).astimezone(pytz.UTC)
+
     logs = (
         InventoryAudit.query
-        .filter(db.func.date(InventoryAudit.timestamp) == query_date)
+        .filter(InventoryAudit.timestamp >= start_utc)
+        .filter(InventoryAudit.timestamp <= end_utc)
         .order_by(InventoryAudit.timestamp.desc())
         .all()
     )
@@ -135,7 +119,7 @@ def get_inventory_audit():
         action_summary[log.action] = action_summary.get(log.action, 0) + 1
 
     return jsonify({
-        "date": query_date.isoformat(),
+        "date": local_date.isoformat(),
         "total": len(logs),
         "by_action": action_summary,
         "logs": [log.to_dict() for log in logs]
