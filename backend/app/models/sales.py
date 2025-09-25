@@ -1,23 +1,21 @@
-from datetime import datetime
+# app/models/sale.py
 from app.extensions import db
+from datetime import datetime
 
 class Sale(db.Model):
     __tablename__ = "sales"
 
     id = db.Column(db.Integer, primary_key=True)
-    item_name = db.Column(db.String(120), nullable=False)
-    amount = db.Column(db.Float, nullable=False)
-    payment_method = db.Column(db.String(50), nullable=False)  # cash, mpesa, paybill
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    total = db.Column(db.Float, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "item_name": self.item_name,
-            "amount": self.amount,
-            "payment_method": self.payment_method,
-            "created_at": self.created_at.isoformat()
-        }
+    items = db.relationship("SaleItem", backref="sale", lazy=True)
 
-    def __repr__(self):
-        return f"<Sale {self.id} - {self.item_name} - {self.amount}>"
+class SaleItem(db.Model):
+    __tablename__ = "sale_items"
+
+    id = db.Column(db.Integer, primary_key=True)
+    sale_id = db.Column(db.Integer, db.ForeignKey("sales.id"), nullable=False)
+    inventory_id = db.Column(db.Integer, db.ForeignKey("inventory.id"), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Float, nullable=False)  # price at sale time

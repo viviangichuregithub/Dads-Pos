@@ -5,6 +5,8 @@ import { Plus, Trash2, Calendar, Wallet } from "lucide-react";
 import axios from "axios";
 import AdminNavbar from "../../../components/AdminNavbar";
 
+const API_BASE = "http://localhost:5000"; 
+
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState([]);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -14,11 +16,12 @@ export default function ExpensesPage() {
 
   const fetchExpenses = async () => {
     try {
-      const res = await axios.get(`/expenses/day?date=${date}`);
+      const res = await axios.get(`${API_BASE}/expenses/day?date=${date}`, { withCredentials: true });
       setExpenses(res.data.expenses);
       setTotal(res.data.total);
     } catch (error) {
       console.error("Error fetching expenses:", error);
+      alert("Failed to fetch expenses. Make sure your backend is running.");
     }
   };
 
@@ -32,28 +35,29 @@ export default function ExpensesPage() {
       return;
     }
     try {
-      await axios.post("/expenses/", { description, amount, date });
+      await axios.post(`${API_BASE}/expenses/`, { description, amount, date }, { withCredentials: true });
       setDescription("");
       setAmount("");
       fetchExpenses();
     } catch (error) {
       console.error("Error adding expense:", error);
+      alert("Failed to add expense.");
     }
   };
 
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this expense?")) return;
     try {
-      await axios.delete(`/expenses/${id}`);
+      await axios.delete(`${API_BASE}/expenses/${id}`, { withCredentials: true });
       fetchExpenses();
     } catch (error) {
       console.error("Error deleting expense:", error);
+      alert("Failed to delete expense.");
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
-      {/* Navbar */}
       <AdminNavbar />
 
       <main className="p-6 md:p-10 space-y-10">
@@ -83,7 +87,7 @@ export default function ExpensesPage() {
             Total Expenses for {date}:
           </span>
           <span className="text-2xl font-bold text-orange-400">
-            ${total.toFixed(2)}
+            Ksh. {total.toFixed(2)}
           </span>
         </section>
 
@@ -137,7 +141,7 @@ export default function ExpensesPage() {
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="font-bold text-blue-500">
-                    ${exp.amount.toFixed(2)}
+                    Ksh. {exp.amount.toFixed(2)}
                   </span>
                   <button
                     onClick={() => handleDelete(exp.id)}

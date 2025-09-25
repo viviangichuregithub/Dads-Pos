@@ -3,10 +3,6 @@
 import { useContext } from "react";
 import { AuthContext } from "@/context/AuthContext";
 
-/**
- * Custom hook to access authentication context
- * Provides: user, loading, login, logout, isAdmin
- */
 export function useAuth() {
   const context = useContext(AuthContext);
 

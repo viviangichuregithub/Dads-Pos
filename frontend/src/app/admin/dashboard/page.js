@@ -1,19 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Wallet, Package, Calendar, Box } from "lucide-react";
 import { useAuth } from "../../../hooks/useAuth";
+import { useRouter } from "next/navigation";
 import AdminNavbar from "../../../components/AdminNavbar";
-import SummaryCard from "../../../components/SummaryCard";
-import SalesChart from "../../../components/SalesChart";
+import { toast } from "react-hot-toast";
 import api from "@/lib/api";
-import { Package, BarChart3 } from "lucide-react";
+import { PieChart, Pie, Cell, Tooltip, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 
-export default function AdminDashboard() {
+export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [sales, setSales] = useState([]);
-  const [inventory, setInventory] = useState([]);
+
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [totalSales, setTotalSales] = useState(0);
+  const [totalExpenses, setTotalExpenses] = useState(0);
+  const [inventoryCount, setInventoryCount] = useState(0);
+  const [dailyData, setDailyData] = useState([]); // sales & expenses over 7 days
   const [dataLoading, setDataLoading] = useState(true);
 
   // Redirect non-admins
@@ -23,114 +27,160 @@ export default function AdminDashboard() {
     }
   }, [user, loading, router]);
 
-  // Fetch sales and inventory data
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [salesRes, inventoryRes] = await Promise.all([
-          api.get("/sales/today"),
-          api.get("/inventory?page=1&per_page=100"), // get inventory summary
-        ]);
-        setSales(salesRes.data);
-        setInventory(inventoryRes.data.items || []);
-      } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-      } finally {
-        setDataLoading(false);
-      }
-    }
+  const fetchDashboardData = async () => {
+    try {
+      setDataLoading(true);
 
-    if (user?.role === "admin") loadData();
-  }, [user]);
+      // Inventory
+      const invRes = await api.get("/inventory/");
+      const inventoryData = invRes.data.items || invRes.data;
+      setInventoryCount(inventoryData.reduce((sum, item) => sum + item.quantity, 0));
+
+      // Total sales today
+      const salesRes = await api.get("/sales/day", { params: { date } });
+      const salesData = salesRes.data.items || salesRes.data;
+      const totalSalesToday = salesData.reduce((sum, sale) => sum + sale.total, 0);
+      setTotalSales(totalSalesToday);
+
+      // Total expenses today
+      const expRes = await api.get("/expenses/day", { params: { date } });
+      const expData = expRes.data.expenses || expRes.data;
+      const totalExpensesToday = expData.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+      setTotalExpenses(totalExpensesToday);
+
+      // Last 7 days data
+      const last7Days = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dayStr = d.toISOString().slice(0, 10);
+
+        const salesRes = await api.get("/sales/day", { params: { date: dayStr } });
+        const salesDay = salesRes.data.items || salesRes.data;
+        const totalSalesDay = salesDay.reduce((sum, s) => sum + s.total, 0);
+
+        const expRes = await api.get("/expenses/day", { params: { date: dayStr } });
+        const expensesDay = expRes.data.expenses || expRes.data;
+        const totalExpensesDay = expensesDay.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+
+        last7Days.push({
+          date: dayStr,
+          sales: totalSalesDay,
+          expenses: totalExpensesDay,
+        });
+      }
+      setDailyData(last7Days);
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to fetch dashboard data");
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.role === "admin") fetchDashboardData();
+  }, [user, date]);
 
   if (loading || dataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <p className="text-gray-400 text-lg animate-pulse">
-          Loading dashboard...
-        </p>
+        <p className="text-gray-400 text-lg animate-pulse">Loading dashboard...</p>
       </div>
     );
   }
 
-  // Sales stats
-  const totalSales = sales.reduce((sum, s) => sum + s.amount, 0);
-  const cashSales = sales.filter((s) => s.payment_method === "cash").reduce((sum, s) => sum + s.amount, 0);
-  const tillSales = sales.filter((s) => s.payment_method === "mpesa").reduce((sum, s) => sum + s.amount, 0);
-  const paybillSales = sales.filter((s) => s.payment_method === "paybill").reduce((sum, s) => sum + s.amount, 0);
-
-  // Inventory stats
-  const totalInventory = inventory.reduce((sum, i) => sum + i.quantity, 0);
+  const pieData = [
+    { name: "Sales", value: totalSales },
+    { name: "Expenses", value: totalExpenses },
+  ];
+  const COLORS = ["#FFA500", "#FF4D4F"]; 
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
       <AdminNavbar />
-
       <main className="p-6 md:p-10 space-y-10">
-        {/* Welcome Header */}
-        <header className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 flex items-center gap-3 transition-transform duration-200 hover:scale-[1.01]">
-          <div>
-            <h1 className="text-3xl font-bold text-blue-500">
-              Welcome, {user?.name}👋
-            </h1>
-            <p className="text-gray-400 mt-1">
-              Here’s what’s happening in your store today.
-            </p>
+        {/* Header */}
+        <header className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Package className="w-8 h-8 text-blue-500" />
+            <div>
+              <h1 className="text-3xl font-bold text-blue-500">Dashboard</h1>
+              <p className="text-gray-400 mt-1">Visualize your business metrics.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-gray-400" />
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+            />
           </div>
         </header>
 
-        {/* Summary Cards */}
-        <section>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
-            <SummaryCard title="Total Sales" value={`KES ${totalSales}`} color="green" />
-            <SummaryCard title="Cash Sales" value={`KES ${cashSales}`} color="orange" />
-            <SummaryCard title="Till Sales" value={`KES ${tillSales}`} color="purple" />
-            <SummaryCard title="Paybill Sales" value={`KES ${paybillSales}`} color="blue" />
-            <SummaryCard title="Total Inventory" value={totalInventory} color="teal" />
+        {/* Metrics Cards */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="bg-gray-900 p-6 rounded-xl shadow-lg border border-gray-800 flex flex-col items-start">
+            <Wallet className="w-6 h-6 text-orange-400 mb-2" />
+            <span className="text-gray-300">Total Sales Today</span>
+            <span className="text-2xl font-bold text-orange-400">Ksh {totalSales.toFixed(2)}</span>
+          </div>
+
+          <div className="bg-gray-900 p-6 rounded-xl shadow-lg border border-gray-800 flex flex-col items-start">
+            <Wallet className="w-6 h-6 text-red-500 mb-2" />
+            <span className="text-gray-300">Total Expenses Today</span>
+            <span className="text-2xl font-bold text-red-500">Ksh {totalExpenses.toFixed(2)}</span>
+          </div>
+
+          <div className="bg-gray-900 p-6 rounded-xl shadow-lg border border-gray-800 flex flex-col items-start">
+            <Box className="w-6 h-6 text-blue-500 mb-2" />
+            <span className="text-gray-300">Inventory Count</span>
+            <span className="text-2xl font-bold text-blue-500">{inventoryCount}</span>
           </div>
         </section>
 
-        {/* Inventory Summary (Dashboard only) */}
+        {/* Pie Chart: Sales vs Expenses */}
         <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800">
-          <div className="flex items-center gap-3 mb-4">
-            <Package className="w-6 h-6 text-orange-400" />
-            <h2 className="text-2xl font-semibold text-orange-400">
-              Inventory Overview
-            </h2>
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {inventory.map((item) => (
-              <div
-                key={item.id}
-                className={`bg-gray-800 p-3 rounded-lg border transition-colors duration-200 ${
-                  item.quantity < 5
-                    ? "border-red-500"
-                    : "border-gray-700"
-                }`}
+          <h2 className="text-2xl font-semibold text-blue-500 mb-4">Sales vs Expenses Today</h2>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie
+                data={pieData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                fill="#8884d8"
+                label
               >
-                <p className="font-medium text-gray-200">{item.name}</p>
-                <p
-                  className={`text-sm mt-1 ${
-                    item.quantity < 5 ? "text-red-400" : "text-gray-400"
-                  }`}
-                >
-                  Quantity: {item.quantity}
-                </p>
-              </div>
-            ))}
-          </div>
+                {pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
         </section>
 
-        {/* Sales Chart */}
-        <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 transition-transform duration-200 hover:scale-[1.01]">
-          <div className="flex items-center gap-3 mb-6">
-            <BarChart3 className="w-6 h-6 text-orange-400" />
-            <h2 className="text-2xl font-semibold text-orange-400">
-              Sales Chart (Today)
-            </h2>
-          </div>
-          <SalesChart sales={sales} />
+        {/* Line Chart: Last 7 Days */}
+        <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800">
+          <h2 className="text-2xl font-semibold text-blue-500 mb-4">Sales & Expenses Last 7 Days</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={dailyData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#2d2d2d" />
+              <XAxis dataKey="date" stroke="#8884d8" />
+              <YAxis stroke="#8884d8" />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="sales" stroke="#FFA500" strokeWidth={2} />
+              <Line type="monotone" dataKey="expenses" stroke="#FF4D4F" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
         </section>
       </main>
     </div>

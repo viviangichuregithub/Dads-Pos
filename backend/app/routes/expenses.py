@@ -85,3 +85,78 @@ def delete_expense(expense_id):
     db.session.delete(expense)
     db.session.commit()
     return jsonify({"message": "Expense deleted successfully"}), 200
+
+
+# ---------------- Monthly / Yearly Summary ----------------
+@expenses_bp.route("/summary", methods=["GET"])
+@login_required
+def get_expenses_summary():
+    """
+    Query Params:
+      - period: 'month' or 'year' (default: 'month')
+      - date: YYYY-MM (for month) or YYYY (for year)
+    """
+    period = request.args.get("period", "month")
+    date_str = request.args.get("date")
+
+    if period == "month":
+        # Default to current month if not provided
+        if date_str:
+            try:
+                year, month = map(int, date_str.split("-"))
+            except ValueError:
+                return jsonify({"error": "Invalid date format. Use YYYY-MM"}), 400
+        else:
+            today = datetime.today()
+            year, month = today.year, today.month
+
+        start_date = datetime(year, month, 1)
+        # End of month
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1)
+        else:
+            end_date = datetime(year, month + 1, 1)
+
+        expenses = Expense.query.filter(
+            Expense.created_at >= start_date,
+            Expense.created_at < end_date
+        ).all()
+
+    elif period == "year":
+        # Default to current year if not provided
+        if date_str:
+            try:
+                year = int(date_str)
+            except ValueError:
+                return jsonify({"error": "Invalid date format. Use YYYY"}), 400
+        else:
+            year = datetime.today().year
+
+        start_date = datetime(year, 1, 1)
+        end_date = datetime(year + 1, 1, 1)
+
+        expenses = Expense.query.filter(
+            Expense.created_at >= start_date,
+            Expense.created_at < end_date
+        ).all()
+    else:
+        return jsonify({"error": "Invalid period. Use 'month' or 'year'."}), 400
+
+    total_amount = sum(exp.amount for exp in expenses)
+
+    return jsonify({
+        "period": period,
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+        "total": total_amount,
+        "count": len(expenses),
+        "expenses": [
+            {
+                "id": exp.id,
+                "description": exp.description,
+                "amount": exp.amount,
+                "created_at": exp.created_at.isoformat()
+            }
+            for exp in expenses
+        ]
+    })

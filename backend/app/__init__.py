@@ -29,7 +29,8 @@ def create_app():
     from app.models.sales import Sale
     from app.models.expense import Expense
     from app.models.inventoryaudit import InventoryAudit
-    from app.models.user_preferences import UserPreferences
+    from app.models.expense import Expense
+
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -41,7 +42,8 @@ def create_app():
     from app.routes.inventory_routes import inventory_bp
     from app.routes.sales_routes import sales_bp
     from app.routes.admin_dashboard import admin_dashboard_bp
-    from app.routes.settings import settings_bp  
+    from app.routes.settings import settings_bp
+    from app.routes.expenses import expenses_bp  
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(employees_bp, url_prefix="/employees")
@@ -49,5 +51,6 @@ def create_app():
     app.register_blueprint(sales_bp, url_prefix="/sales")
     app.register_blueprint(admin_dashboard_bp, url_prefix="/api/admin/dashboard")
     app.register_blueprint(settings_bp, url_prefix="/settings") 
+    app.register_blueprint(expenses_bp, url_prefix="/expenses")
 
     return app
