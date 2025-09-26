@@ -5,7 +5,7 @@ import { Plus, Trash2, Calendar, Wallet } from "lucide-react";
 import axios from "axios";
 import AdminNavbar from "../../../components/AdminNavbar";
 
-const API_BASE = "http://localhost:5000"; 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"; 
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState([]);
