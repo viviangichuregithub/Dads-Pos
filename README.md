@@ -163,7 +163,7 @@ Perfect ✨ Thanks for clarifying! Since this is **both inspired by your dad’s
 
 This project is licensed under the **MIT License** – you are free to use, modify, and distribute it, provided proper attribution is given.
 
-
+Copyright (c) 2025 viviangichuregithub
 
 ---
 
