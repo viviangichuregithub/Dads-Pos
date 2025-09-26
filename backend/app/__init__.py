@@ -9,10 +9,15 @@ def create_app():
     app.config.from_object(Config)
 
     CORS(
-        app,
-        resources={r"/*": {"origins": ["http://localhost:3000", "https://shoe-world-base.onrender.com"]}},
-        supports_credentials=True,
-    )
+    app,
+    resources={r"/*": {"origins": [
+        "http://localhost:3000",
+        "https://shoe-world-base.onrender.com",
+        "https://pos-app-orcin-chi.vercel.app"
+    ]}},
+    supports_credentials=True,
+)
+
 
     db.init_app(app)
     migrate.init_app(app, db)
