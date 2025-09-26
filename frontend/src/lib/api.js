@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://shoe-world-base.onrender.com", 
+  baseURL: "https://pos-app-1-ncks.onrender.com", 
   withCredentials: true,
 });
 
