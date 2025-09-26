@@ -2,30 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Wallet, Calendar } from "lucide-react";
-import { useAuth } from "../../../hooks/useAuth";
-import { useRouter } from "next/navigation";
-import AdminNavbar from "../../../components/AdminNavbar";
+import StaffNavbar from "../../../components/StaffNavbar";
 import { toast } from "react-hot-toast";
 import api from "../../../lib/api";
+import { useAuth } from "../../../hooks/useAuth";
 
-export default function SalesPage() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+export default function StaffSalesPage() {
+  const { user, loading: authLoading } = useAuth();
   const [sales, setSales] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
-  const [totalSales, setTotalSales] = useState(0);
   const [saleItems, setSaleItems] = useState([{ inventory_id: "", quantity: 1 }]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [page, setPage] = useState(1);
   const [perPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  useEffect(() => {
-    if (!loading && (!user || user.role !== "admin")) {
-      router.push("/auth/login");
-    }
-  }, [user, loading, router]);
-
+  const [totalSales, setTotalSales] = useState(0);
   const fetchInventory = async () => {
     try {
       const res = await api.get("/inventory/", { params: { page: 1, per_page: 100 } });
@@ -35,10 +27,13 @@ export default function SalesPage() {
       toast.error("Failed to fetch inventory");
     }
   };
-  const fetchSales = async (pageNum = 1) => {
+  const fetchSales = async (pageNum = 1, date = selectedDate) => {
     try {
       setDataLoading(true);
-      const res = await api.get("/sales/day", { params: { date, page: pageNum, per_page: perPage } });
+      if (!user) return;
+      const res = await api.get("/sales/day", {
+        params: { date, page: pageNum, per_page: perPage, staff_id: user.id },
+      });
       const fetchedSales = res.data.items || res.data;
       setSales(fetchedSales);
       setPage(res.data.page || pageNum);
@@ -53,11 +48,15 @@ export default function SalesPage() {
     }
   };
   useEffect(() => {
-    if (user?.role === "admin") {
+    if (!authLoading && user) {
       fetchInventory();
-      fetchSales(1);
+      fetchSales(1, selectedDate);
     }
-  }, [user, date]);
+  }, [user]);
+  useEffect(() => {
+    if (user) fetchSales(1, selectedDate);
+  }, [selectedDate, user]);
+  const handleDateChange = (e) => setSelectedDate(e.target.value);
   const handleItemChange = (index, field, value) => {
     const newItems = [...saleItems];
     newItems[index][field] = field === "quantity" ? parseInt(value) : value;
@@ -65,14 +64,14 @@ export default function SalesPage() {
   };
   const addSaleItemRow = () => setSaleItems([...saleItems, { inventory_id: "", quantity: 1 }]);
   const removeSaleItemRow = (index) => setSaleItems(saleItems.filter((_, i) => i !== index));
-
   const handleSubmitSale = async (e) => {
     e.preventDefault();
     try {
-      await api.post("/sales/", saleItems);
+      const payload = saleItems.map((item) => ({ ...item, staff_id: user.id }));
+      await api.post("/sales/", payload);
       toast.success("Sale recorded!");
       setSaleItems([{ inventory_id: "", quantity: 1 }]);
-      fetchSales(page);
+      fetchSales(page, selectedDate); 
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.error || "Failed to create sale");
@@ -80,9 +79,9 @@ export default function SalesPage() {
   };
   const handlePageChange = (newPage) => {
     if (newPage < 1 || newPage > totalPages) return;
-    fetchSales(newPage);
+    fetchSales(newPage, selectedDate);
   };
-  if (loading || dataLoading) {
+  if (authLoading || dataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <p className="text-gray-400 text-lg animate-pulse">Loading sales...</p>
@@ -91,33 +90,27 @@ export default function SalesPage() {
   }
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
-      <AdminNavbar />
+      <StaffNavbar />
       <main className="p-6 md:p-10 space-y-10">
-        <header className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Wallet className="w-8 h-8 text-orange-400" />
-            <div>
-              <h1 className="text-3xl font-bold text-blue-500">Sales</h1>
-              <p className="text-gray-400 mt-1">Add new sales and track past transactions.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-gray-400" />
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
-            />
+        <header className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 flex items-center gap-3">
+          <Wallet className="w-8 h-8 text-orange-400" />
+          <div>
+            <h1 className="text-3xl font-bold text-blue-500">Sales</h1>
+            <p className="text-gray-400 mt-1">Record and view your sales for a specific day.</p>
           </div>
         </header>
-        <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 flex justify-between items-center max-w-2xl">
-          <span className="text-lg font-medium text-gray-300">
-            Total Sales for {date}:
-          </span>
-          <span className="text-2xl font-bold text-orange-400">
-            Ksh {totalSales.toFixed(2)}
-          </span>
+        <section className="flex items-center gap-3">
+          <Calendar className="w-5 h-5 text-gray-400" />
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={handleDateChange}
+            className="px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100"
+          />
+        </section>
+        <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 max-w-2xl flex justify-between items-center">
+          <span className="text-gray-300">Total Sales for {selectedDate}:</span>
+          <span className="text-2xl font-bold text-orange-400">Ksh {totalSales.toFixed(2)}</span>
         </section>
         <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 max-w-2xl">
           <h2 className="text-2xl font-semibold text-orange-400 mb-6 flex items-center gap-2">
@@ -129,7 +122,7 @@ export default function SalesPage() {
                 <select
                   value={item.inventory_id}
                   onChange={(e) => handleItemChange(index, "inventory_id", e.target.value)}
-                  className="flex-1 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="flex-1 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100"
                   required
                 >
                   <option value="">Select item</option>
@@ -144,14 +137,14 @@ export default function SalesPage() {
                   min="1"
                   value={item.quantity}
                   onChange={(e) => handleItemChange(index, "quantity", e.target.value)}
-                  className="w-24 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-24 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100"
                   required
                 />
                 {saleItems.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeSaleItemRow(index)}
-                    className="p-2 rounded-lg hover:bg-red-900 text-red-500 transition"
+                    className="p-2 rounded-lg hover:bg-red-900 text-red-500"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -159,17 +152,10 @@ export default function SalesPage() {
               </div>
             ))}
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={addSaleItemRow}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg"
-              >
+              <button type="button" onClick={addSaleItemRow} className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700">
                 Add Another Item
               </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg"
-              >
+              <button type="submit" className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700">
                 Submit Sale
               </button>
             </div>
@@ -177,7 +163,7 @@ export default function SalesPage() {
         </section>
         <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {sales.length === 0 && (
-            <p className="text-gray-400 text-center col-span-full">No sales found.</p>
+            <p className="text-gray-400 text-center col-span-full">No sales found for this date.</p>
           )}
           {sales.map((sale) => (
             <div key={sale.id} className="bg-gray-900 p-4 rounded-xl shadow-md border border-gray-800">
@@ -192,7 +178,7 @@ export default function SalesPage() {
                 <ul className="text-gray-400 text-sm list-disc ml-5">
                   {sale.items.map((item) => (
                     <li key={item.inventory_id}>
-                      Inventory {item.inventory_id}: {item.quantity} x Ksh {item.price.toFixed(2)}
+                      Inventory #{item.inventory_id}: {item.quantity} x Ksh {item.price.toFixed(2)}
                     </li>
                   ))}
                 </ul>

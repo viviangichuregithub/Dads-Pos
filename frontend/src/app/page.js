@@ -8,17 +8,12 @@ import { BarChart, Shield, Zap } from "lucide-react";
 
 export default function HomePage() {
   const router = useRouter();
-
   return (
     <main className="min-h-screen flex flex-col bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white relative">
-      {/* Top Navbar */}
       <header className="w-full flex flex-col md:flex-row justify-between items-center px-6 md:px-8 py-4 border-b border-gray-700 gap-4 md:gap-0">
-        {/* Brand */}
         <h2 className="text-xl md:text-2xl font-bold text-orange-400 text-center md:text-left">
           Shoe <span className="text-blue-500">World Base</span>
         </h2>
-
-        {/* Buttons */}
         <div className="flex gap-3">
           <Button
             className="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm md:text-base"
@@ -34,10 +29,7 @@ export default function HomePage() {
           </Button>
         </div>
       </header>
-
-      {/* Hero Section */}
       <section className="flex flex-col items-center justify-center flex-1 text-center px-6">
-        {/* Logo */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -54,8 +46,6 @@ export default function HomePage() {
           />
         </motion.div>
       </section>
-
-      {/* Features Section */}
       <section className="w-full max-w-5xl px-6 py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 text-center mx-auto">
         {[
           {
@@ -90,8 +80,6 @@ export default function HomePage() {
           </motion.div>
         ))}
       </section>
-
-      {/* Culture/Team Statement */}
       <section className="text-center max-w-3xl px-6 py-8 md:py-10 mx-auto">
         <motion.p
           initial={{ opacity: 0 }}
@@ -103,8 +91,6 @@ export default function HomePage() {
           Working here means being part of a family that’s shaping the future of retail.”
         </motion.p>
       </section>
-
-      {/* Footer */}
       <footer className="w-full text-center py-4 md:py-6 text-gray-500 text-xs md:text-sm border-t border-gray-700">
         © {new Date().getFullYear()} Shoe World Base. All rights reserved.
       </footer>

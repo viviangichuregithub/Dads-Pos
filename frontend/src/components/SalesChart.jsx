@@ -20,13 +20,13 @@ export default function SalesChart({ sales }) {
       {
         label: "Sales (KES)",
         data: sales.map((s) => s.amount),
-        borderColor: "#3b82f6", // Tailwind blue-500
-        backgroundColor: "rgba(59, 130, 246, 0.2)", // soft blue fill
-        pointBackgroundColor: "#f59e0b", // amber-500 for points
-        pointBorderColor: "#1f2937", // gray-900 (blend with bg)
+        borderColor: "#3b82f6", 
+        backgroundColor: "rgba(59, 130, 246, 0.2)", 
+        pointBackgroundColor: "#f59e0b", 
+        pointBorderColor: "#1f2937", 
         pointRadius: 5,
         pointHoverRadius: 7,
-        tension: 0.4, // smooth curves
+        tension: 0.4, 
       },
     ],
   };
@@ -37,7 +37,7 @@ export default function SalesChart({ sales }) {
     plugins: {
       legend: {
         labels: {
-          color: "#d1d5db", // text-gray-300
+          color: "#d1d5db",
           font: {
             size: 14,
           },
@@ -46,27 +46,27 @@ export default function SalesChart({ sales }) {
       title: {
         display: true,
         text: "Daily Sales Trend",
-        color: "#f59e0b", // orange-400
+        color: "#f59e0b", 
         font: {
           size: 18,
           weight: "bold",
         },
       },
       tooltip: {
-        backgroundColor: "#111827", // gray-900
-        titleColor: "#f3f4f6", // gray-100
-        bodyColor: "#d1d5db", // gray-300
-        borderColor: "#374151", // gray-700
+        backgroundColor: "#111827",
+        titleColor: "#f3f4f6",
+        bodyColor: "#d1d5db", 
+        borderColor: "#374151", 
         borderWidth: 1,
       },
     },
     scales: {
       x: {
         ticks: {
-          color: "#9ca3af", // gray-400
+          color: "#9ca3af", 
         },
         grid: {
-          color: "rgba(75, 85, 99, 0.2)", // gray-600 with opacity
+          color: "rgba(75, 85, 99, 0.2)", 
         },
       },
       y: {

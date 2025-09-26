@@ -5,16 +5,12 @@ import api from "../../../lib/api";
 import AdminNavbar from "../../../components/AdminNavbar";
 import { toast } from "react-hot-toast";
 import { Settings } from "lucide-react";
-
-// Settings sub-components
 import ProfileSettings from "../../../components/ProfileSettings";
 import UserManagement from "../../../components/UserManagement";
 import InventoryAudit from "../../../components/InventoryAudit";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
-
-  // State
   const [profile, setProfile] = useState({ name: "", email: "" });
   const [users, setUsers] = useState([]);
   const [newUser, setNewUser] = useState({
@@ -23,15 +19,10 @@ export default function SettingsPage() {
     password: "",
     role: "staff",
   });
-
-  // -----------------
-  // Data fetching
-  // -----------------
   useEffect(() => {
     fetchProfile();
     fetchUsers();
   }, []);
-
   const fetchProfile = async () => {
     try {
       const res = await api.get("/settings/profile");
@@ -40,7 +31,6 @@ export default function SettingsPage() {
       toast.error("Failed to load profile");
     }
   };
-
   const updateProfile = async () => {
     try {
       await api.put("/settings/profile", profile);
@@ -49,16 +39,13 @@ export default function SettingsPage() {
       toast.error("Failed to update profile");
     }
   };
-
   const fetchUsers = async () => {
     try {
       const res = await api.get("/settings/users");
       setUsers(res.data);
     } catch {
-      // not admin → ignore
     }
   };
-
   const addUser = async () => {
     try {
       await api.post("/settings/users", newUser);
@@ -69,7 +56,6 @@ export default function SettingsPage() {
       toast.error("Failed to add user");
     }
   };
-
   const deleteUser = async (id) => {
     if (!confirm("Delete this user?")) return;
     try {
@@ -80,20 +66,13 @@ export default function SettingsPage() {
       toast.error("Failed to delete user");
     }
   };
-
-  // -----------------
-  // UI
-  // -----------------
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
       <AdminNavbar />
       <main className="p-6 md:p-10">
-        {/* Page header */}
         <h1 className="text-3xl font-bold text-blue-500 mb-6 flex items-center gap-2">
           <Settings className="w-7 h-7 text-blue-400" /> Settings
         </h1>
-
-        {/* Tabs */}
         <div className="flex gap-4 border-b border-gray-700 mb-6 overflow-x-auto">
           <button
             className={`pb-2 ${
@@ -126,8 +105,6 @@ export default function SettingsPage() {
             Inventory Audit
           </button>
         </div>
-
-        {/* Tab content */}
         {activeTab === "profile" && (
           <ProfileSettings
             profile={profile}
@@ -135,7 +112,6 @@ export default function SettingsPage() {
             updateProfile={updateProfile}
           />
         )}
-
         {activeTab === "users" && (
           <UserManagement
             users={users}
@@ -145,7 +121,6 @@ export default function SettingsPage() {
             deleteUser={deleteUser}
           />
         )}
-
         {activeTab === "audit" && <InventoryAudit />}
       </main>
     </div>

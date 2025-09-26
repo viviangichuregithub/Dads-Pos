@@ -44,7 +44,7 @@ export default function ProfileSettings({ profile, setProfile, updateProfile, up
       <div className="flex flex-col md:flex-row items-center gap-6 md:gap-12">
         <div className="relative">
           <img
-            src={profile.avatar || "/default-avatar.png"}
+            src={profile.avatar || "/avatar.png"}
             alt="Profile Picture"
             className="w-24 h-24 rounded-full border-2 border-gray-700 object-cover"
           />

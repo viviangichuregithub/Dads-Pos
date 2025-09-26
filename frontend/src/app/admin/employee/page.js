@@ -5,7 +5,8 @@ import { useAuth } from "../../../hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Navbar from "../../../components/AdminNavbar";
 import api from "../../../lib/api";
-import { Users, ClipboardList } from "lucide-react"; 
+import { Users, ClipboardList ,Edit2,Trash2} from "lucide-react"; 
+
 
 export default function EmployeesPage() {
   const { user, loading } = useAuth();
@@ -16,14 +17,13 @@ export default function EmployeesPage() {
   const [editId, setEditId] = useState(null);
   const [error, setError] = useState("");
 
-  // Redirect non-admins
   useEffect(() => {
     if (!loading && (!user || user.role !== "admin")) {
       router.push("/auth/login");
     }
   }, [user, loading, router]);
 
-  // Fetch employees
+
   const fetchEmployees = async () => {
     try {
       setDataLoading(true);
@@ -40,12 +40,10 @@ export default function EmployeesPage() {
     if (user?.role === "admin") fetchEmployees();
   }, [user]);
 
-  // Handle form changes
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Handle add or update employee
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -65,7 +63,6 @@ export default function EmployeesPage() {
     }
   };
 
-  // Edit employee
   const handleEdit = (employee) => {
     setForm({
       name: employee.name,
@@ -75,7 +72,6 @@ export default function EmployeesPage() {
     setEditId(employee.id);
   };
 
-  // Delete employee
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this employee?")) return;
     try {
@@ -85,7 +81,6 @@ export default function EmployeesPage() {
       console.error(err);
     }
   };
-
   if (loading || dataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
@@ -93,13 +88,10 @@ export default function EmployeesPage() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
       <Navbar />
-
       <main className="p-6 md:p-10 space-y-10">
-        {/* Page Header */}
         <header className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 flex items-center gap-3">
           <Users className="w-8 h-8 text-blue-500" /> 
           <div>
@@ -107,8 +99,6 @@ export default function EmployeesPage() {
             <p className="text-gray-400 mt-1">Manage your staff records here.</p>
           </div>
         </header>
-
-        {/* Form for Add / Edit */}
         <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 max-w-lg">
           <h2 className="text-2xl font-semibold text-orange-400 mb-6">
             {editId ? "Update Employee" : "Add Employee"}
@@ -155,8 +145,6 @@ export default function EmployeesPage() {
             </button>
           </form>
         </section>
-
-        {/* Employees Table */}
         <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800">
           <div className="flex items-center gap-3 mb-6">
             <ClipboardList className="w-6 h-6 text-orange-400" /> 
@@ -182,20 +170,23 @@ export default function EmployeesPage() {
                       <td className="px-4 py-3">{e.name}</td>
                       <td className="px-4 py-3">{e.phone_number}</td>
                       <td className="px-4 py-3">{e.gender}</td>
-                      <td className="px-4 py-3 space-x-2">
-                        <button
-                          onClick={() => handleEdit(e)}
-                          className="bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600 transition"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(e.id)}
-                          className="bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-800 transition"
-                        >
-                          Delete
-                        </button>
-                      </td>
+                      <td className="px-4 py-3 flex flex-wrap gap-2">
+  <button
+    onClick={() => handleEdit(e)}
+    className="bg-green-500 text-white px-2 py-1 rounded-lg hover:bg-green-600 flex items-center justify-center gap-1"
+  >
+    <Edit2 className="w-4 h-4" />
+    Edit
+  </button>
+
+  <button
+    onClick={() => handleDelete(e.id)}
+    className="bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-800 flex items-center justify-center gap-1 transition"
+  >
+    <Trash2 className="w-4 h-4" />
+    Delete
+  </button>
+</td>
                     </tr>
                   ))
                 ) : (
