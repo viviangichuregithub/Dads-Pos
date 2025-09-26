@@ -10,7 +10,7 @@ def create_app():
 
     CORS(
         app,
-        resources={r"/*": {"origins": "http://localhost:3000,https://shoe-world-base.onrender.com"}},
+        resources={r"/*": {"origins": ["http://localhost:3000", "https://shoe-world-base.onrender.com"]}},
         supports_credentials=True,
     )
 
