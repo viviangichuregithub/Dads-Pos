@@ -37,7 +37,7 @@ export default function LoginPage() {
   });
 
   const handleSubmit = async (values, { setSubmitting, setStatus }) => {
-    setStatus(""); 
+    setStatus("");
     try {
       const loggedInUser = await login(values.email, values.password);
       if (loggedInUser?.role === "admin") router.push("/admin/dashboard");
@@ -113,7 +113,7 @@ export default function LoginPage() {
             </Button>
 
             <p className="text-gray-400 text-sm text-center">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <span
                 onClick={() => router.push("/auth/register")}
                 className="text-orange-400 cursor-pointer hover:underline"
