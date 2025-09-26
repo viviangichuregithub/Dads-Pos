@@ -9,9 +9,6 @@ from io import BytesIO
 
 inventory_bp = Blueprint("inventory_bp", __name__)
 
-# --------------------------
-# GET /inventory → list all or search with pagination
-# --------------------------
 @inventory_bp.route("/", methods=["GET"])
 def get_inventory():
     search = request.args.get("name")
@@ -38,10 +35,6 @@ def get_inventory():
 
     return jsonify(response), 200
 
-
-# --------------------------
-# POST /inventory → add new shoe
-# --------------------------
 @inventory_bp.route("/", methods=["POST"])
 def add_shoe():
     data = request.json
@@ -73,7 +66,7 @@ def add_shoe():
             quantity=int(data["quantity"])
         )
         db.session.add(shoe)
-        db.session.flush()  # get ID before commit
+        db.session.flush() 
 
         audits.append(
             InventoryAudit(
@@ -90,10 +83,6 @@ def add_shoe():
     db.session.commit()
     return jsonify(shoe.to_dict()), 201
 
-
-# --------------------------
-# PATCH /inventory/<id> → update shoe
-# --------------------------
 @inventory_bp.route("/<int:id>", methods=["PATCH"])
 def update_shoe(id):
     shoe = Inventory.query.get_or_404(id)
@@ -128,10 +117,6 @@ def update_shoe(id):
     else:
         return jsonify({"message": "No changes detected"}), 200
 
-
-# --------------------------
-# DELETE /inventory/<id> → delete shoe
-# --------------------------
 @inventory_bp.route("/<int:id>", methods=["DELETE"])
 def delete_shoe(id):
     shoe = Inventory.query.get_or_404(id)
@@ -149,10 +134,6 @@ def delete_shoe(id):
     db.session.commit()
     return jsonify({"message": "Deleted"}), 200
 
-
-# --------------------------
-# POST /inventory/import/excel → import Excel
-# --------------------------
 @inventory_bp.route("/import/excel", methods=["POST"])
 def import_excel():
     file = request.files.get("file")
@@ -206,9 +187,6 @@ def import_excel():
         return jsonify({"error": str(e)}), 400
 
 
-# --------------------------
-# GET /inventory/export/<file_type> → export Excel or PDF
-# --------------------------
 @inventory_bp.route("/export/<string:file_type>", methods=["GET"])
 def export_inventory(file_type):
     items = Inventory.query.all()
@@ -222,7 +200,7 @@ def export_inventory(file_type):
         return send_file(output, download_name="inventory.xlsx", as_attachment=True)
 
     elif file_type.lower() == "pdf":
-        # Placeholder for proper PDF export, currently CSV
+       
         df = df[["name", "price", "quantity"]]
         df.to_csv(output, index=False)
         output.seek(0)

@@ -9,9 +9,6 @@ import pytz
 
 settings_bp = Blueprint("settings", __name__)
 
-# -----------------------------
-# Profile Management (current user)
-# -----------------------------
 @settings_bp.route("/profile", methods=["GET", "PUT"])
 @login_required
 def manage_profile():
@@ -37,9 +34,6 @@ def manage_profile():
         return jsonify({"message": "Profile updated successfully"}), 200
 
 
-# -----------------------------
-# User Management (Admins only)
-# -----------------------------
 @settings_bp.route("/users", methods=["GET", "POST"])
 @login_required
 def manage_users():
@@ -81,10 +75,6 @@ def delete_user(user_id):
     return jsonify({"message": "User deleted successfully"}), 200
 
 
-
-# -----------------------------
-# Inventory Audit Logs
-# -----------------------------
 @settings_bp.route("/inventory-audit", methods=["GET"])
 @login_required
 def get_inventory_audit():
@@ -94,15 +84,13 @@ def get_inventory_audit():
         return jsonify({"error": "Missing 'date' parameter"}), 400
 
     try:
-        # Client sends date in local time (Kenya UTC+3)
+
         local_date = datetime.strptime(date_str, "%Y-%m-%d").date()
     except ValueError:
         return jsonify({"error": "Invalid date format, expected YYYY-MM-DD"}), 400
 
-    # Define Kenya timezone
     kenya_tz = pytz.timezone("Africa/Nairobi")
     
-    # Start and end of the day in UTC
     start_utc = kenya_tz.localize(datetime.combine(local_date, datetime.min.time())).astimezone(pytz.UTC)
     end_utc = kenya_tz.localize(datetime.combine(local_date, datetime.max.time())).astimezone(pytz.UTC)
 

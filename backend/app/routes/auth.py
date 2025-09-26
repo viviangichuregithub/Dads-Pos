@@ -8,10 +8,8 @@ import os
 
 auth_bp = Blueprint("auth", __name__)
 
-# ---------------- Admin secret ----------------
 ADMIN_SECRET = os.environ.get("ADMIN_SECRET", "jasanvivian123")
 
-# ---------------- Helpers ----------------
 def is_strong_password(password: str) -> tuple[bool, str]:
     """Check password strength and return message if weak."""
     if len(password) < 8:
@@ -22,7 +20,6 @@ def is_strong_password(password: str) -> tuple[bool, str]:
         return False, "Password must contain at least one number"
     return True, ""
 
-# ---------------- Register ----------------
 @auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.get_json() or {}
@@ -34,11 +31,10 @@ def register():
     role = data.get("role", "staff")
     admin_secret = data.get("admin_secret", "")
 
-    # Validate required fields
     if not all([name, email, phone_number, password, confirm_password, role]):
         return jsonify({"error": "All fields are required"}), 400
 
-    # Password checks
+
     if password != confirm_password:
         return jsonify({"error": "Passwords do not match"}), 400
 
@@ -46,17 +42,14 @@ def register():
     if not valid:
         return jsonify({"error": msg}), 400
 
-    # Check admin secret if role is admin
     if role == "admin" and admin_secret != ADMIN_SECRET:
         return jsonify({"error": "Invalid admin secret password"}), 403
 
-    # Check existing email/phone
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "This email is already registered"}), 400
     if User.query.filter_by(phone_number=phone_number).first():
         return jsonify({"error": "This phone number is already registered"}), 400
 
-    # Create user
     user = User(name=name, email=email, phone_number=phone_number, role=role)
     user.set_password(password)
 
@@ -69,7 +62,6 @@ def register():
         "role": user.role
     }), 201
 
-# ---------------- Login ----------------
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json() or {}
@@ -95,14 +87,13 @@ def login():
         }
     }), 200
 
-# ---------------- Logout ----------------
 @auth_bp.route("/logout", methods=["POST"])
 @login_required
 def logout():
     logout_user()
     return jsonify({"message": "Logged out successfully"}), 200
 
-# ---------------- Current user ----------------
+
 @auth_bp.route("/me", methods=["GET"])
 def me():
     if not current_user.is_authenticated:

@@ -7,7 +7,6 @@ from io import BytesIO
 
 inventory_bp = Blueprint('inventory', __name__, url_prefix='/inventory')
 
-# GET /inventory?search=
 @inventory_bp.route('/', methods=['GET'])
 def get_inventory():
     search = request.args.get('name', '')
@@ -17,7 +16,6 @@ def get_inventory():
     shoes = query.all()
     return jsonify([{'id': s.id, 'name': s.name, 'price': s.price, 'quantity': s.quantity} for s in shoes])
 
-# POST /inventory
 @inventory_bp.route('/', methods=['POST'])
 def add_shoe():
     data = request.json
@@ -26,9 +24,8 @@ def add_shoe():
 
     shoe = Shoe.query.filter_by(name=data['name']).first()
     if shoe:
-        # Update quantity if shoe exists
         shoe.quantity += data['quantity']
-        shoe.price = data['price']  # Optionally update price
+        shoe.price = data['price'] 
     else:
         shoe = Shoe(name=data['name'], price=data['price'], quantity=data['quantity'])
         db.session.add(shoe)
@@ -36,7 +33,6 @@ def add_shoe():
     db.session.commit()
     return jsonify({'message': 'Shoe added/updated successfully'})
 
-# PATCH /inventory/<id>
 @inventory_bp.route('/<int:id>', methods=['PATCH'])
 def update_shoe(id):
     shoe = Shoe.query.get_or_404(id)
@@ -47,7 +43,6 @@ def update_shoe(id):
     db.session.commit()
     return jsonify({'message': 'Shoe updated successfully'})
 
-# DELETE /inventory/<id>
 @inventory_bp.route('/<int:id>', methods=['DELETE'])
 def delete_shoe(id):
     shoe = Shoe.query.get_or_404(id)
@@ -55,7 +50,6 @@ def delete_shoe(id):
     db.session.commit()
     return jsonify({'message': 'Shoe deleted successfully'})
 
-# POST /inventory/import/excel
 @inventory_bp.route('/import/excel', methods=['POST'])
 def import_excel():
     file = request.files.get('file')
@@ -63,7 +57,7 @@ def import_excel():
         return jsonify({'error': 'No file uploaded'}), 400
 
     df = pd.read_excel(file)
-    # Expect columns: name, price, quantity
+
     for _, row in df.iterrows():
         shoe = Shoe.query.filter_by(name=row['name']).first()
         if shoe:
@@ -74,7 +68,6 @@ def import_excel():
     db.session.commit()
     return jsonify({'message': 'Inventory imported successfully'})
 
-# GET /inventory/export/<type>
 @inventory_bp.route('/export/<string:file_type>', methods=['GET'])
 def export_inventory(file_type):
     shoes = Shoe.query.all()
@@ -86,7 +79,6 @@ def export_inventory(file_type):
         output.seek(0)
         return send_file(output, download_name='inventory.xlsx', as_attachment=True)
     elif file_type == 'pdf':
-        # Simple PDF using pandas to HTML -> PDF (you can use reportlab or pdfkit for advanced)
         import pdfkit
         html = df.to_html(index=False)
         pdf = pdfkit.from_string(html, False)

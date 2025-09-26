@@ -4,13 +4,11 @@ from app.extensions import db
 
 employees_bp = Blueprint("employees", __name__, url_prefix="/employees")
 
-# GET all employees
 @employees_bp.route("/", methods=["GET"])
 def get_employees():
     employees = Employee.query.all()
     return jsonify([e.to_dict() for e in employees])
 
-# POST create employee
 @employees_bp.route("/", methods=["POST"])
 def create_employee():
     data = request.json
@@ -23,7 +21,6 @@ def create_employee():
     db.session.commit()
     return jsonify(employee.to_dict()), 201
 
-# PUT update employee
 @employees_bp.route("/<int:id>", methods=["PUT"])
 def update_employee(id):
     employee = Employee.query.get_or_404(id)
@@ -34,7 +31,6 @@ def update_employee(id):
     db.session.commit()
     return jsonify(employee.to_dict())
 
-# DELETE employee
 @employees_bp.route("/<int:id>", methods=["DELETE"])
 def delete_employee(id):
     employee = Employee.query.get_or_404(id)

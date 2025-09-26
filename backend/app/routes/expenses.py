@@ -38,11 +38,10 @@ def add_expense():
         "created_at": expense.created_at
     }), 201
 
-# ---------------- Get expenses for a specific day ----------------
 @expenses_bp.route("/day", methods=["GET"])
 @login_required
 def get_expenses_by_day():
-    day_str = request.args.get("date")  # expects "YYYY-MM-DD"
+    day_str = request.args.get("date")  
     if day_str:
         try:
             day = datetime.strptime(day_str, "%Y-%m-%d").date()
@@ -67,7 +66,6 @@ def get_expenses_by_day():
         ]
     })
 
-# ---------------- Get all expenses (optional) ----------------
 @expenses_bp.route("/", methods=["GET"])
 @login_required
 def get_all_expenses():
@@ -77,7 +75,6 @@ def get_all_expenses():
         for exp in expenses
     ])
 
-# ---------------- Delete an expense ----------------
 @expenses_bp.route("/<int:expense_id>", methods=["DELETE"])
 @login_required
 def delete_expense(expense_id):
@@ -87,7 +84,6 @@ def delete_expense(expense_id):
     return jsonify({"message": "Expense deleted successfully"}), 200
 
 
-# ---------------- Monthly / Yearly Summary ----------------
 @expenses_bp.route("/summary", methods=["GET"])
 @login_required
 def get_expenses_summary():
@@ -100,7 +96,7 @@ def get_expenses_summary():
     date_str = request.args.get("date")
 
     if period == "month":
-        # Default to current month if not provided
+    
         if date_str:
             try:
                 year, month = map(int, date_str.split("-"))
@@ -111,7 +107,7 @@ def get_expenses_summary():
             year, month = today.year, today.month
 
         start_date = datetime(year, month, 1)
-        # End of month
+    
         if month == 12:
             end_date = datetime(year + 1, 1, 1)
         else:
@@ -123,7 +119,7 @@ def get_expenses_summary():
         ).all()
 
     elif period == "year":
-        # Default to current year if not provided
+ 
         if date_str:
             try:
                 year = int(date_str)
