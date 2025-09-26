@@ -120,70 +120,67 @@ export default function StaffDashboard() {
             </span>
           </div>
         </section>
+        {/* Charts Section */}
+<section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  {/* Daily Sales Target PieChart */}
+  <div className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800">
+    <h2 className="text-2xl font-semibold text-blue-500 mb-6">
+      Daily Sales Target
+    </h2>
+    <div className="flex justify-center">
+      <ResponsiveContainer width="100%" height={250}>
+        <PieChart>
+          <Pie
+            data={[
+              { name: "Achieved", value: totalSales },
+              {
+                name: "Remaining",
+                value: Math.max(dailyTarget - totalSales, 0),
+              },
+            ]}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            outerRadius={90}
+            innerRadius={40}
+            fill="#8884d8"
+            label={({ name, percent }) =>
+              `${name}: ${(percent * 100).toFixed(0)}%`
+            }
+          >
+            <Cell fill="#FFA500" />
+            <Cell fill="#FF4D4F" />
+          </Pie>
+          <Tooltip formatter={(value) => `Ksh ${value.toLocaleString()}`} />
+          <Legend verticalAlign="bottom" height={36} />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  </div>
 
-        {/* Daily Sales Target */}
-        <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800">
-          <h2 className="text-2xl font-semibold text-blue-500 mb-6">
-            Daily Sales Target
-          </h2>
-          <div className="flex justify-center">
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={[
-                    { name: "Achieved", value: totalSales },
-                    {
-                      name: "Remaining",
-                      value: Math.max(dailyTarget - totalSales, 0),
-                    },
-                  ]}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={90}
-                  innerRadius={40}
-                  fill="#8884d8"
-                  label={({ name, percent }) =>
-                    `${name}: ${(percent * 100).toFixed(0)}%`
-                  }
-                >
-                  <Cell fill="#FFA500" /> {/* Achieved */}
-                  <Cell fill="#FF4D4F" /> {/* Remaining */}
-                </Pie>
-                <Tooltip
-                  formatter={(value) => `Ksh ${value.toLocaleString()}`}
-                />
-                <Legend verticalAlign="bottom" height={36} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
+  {/* Sales Last 7 Days LineChart */}
+  <div className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800">
+    <h2 className="text-2xl font-semibold text-blue-500 mb-4">
+      Sales Last 7 Days
+    </h2>
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart data={dailySalesData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#2d2d2d" />
+        <XAxis dataKey="date" stroke="#3B82F6" />
+        <YAxis stroke="#3B82F6" />
+        <Tooltip
+          contentStyle={{ backgroundColor: "#111827" }}
+          itemStyle={{ color: "#f9fafb" }}
+          labelStyle={{ color: "#93c5fd" }}
+        />
+        <Legend />
+        <Line type="monotone" dataKey="sales" stroke="#FFA500" strokeWidth={2} />
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
+</section>
 
-        {/* Sales Last 7 Days */}
-        <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800">
-          <h2 className="text-2xl font-semibold text-blue-500 mb-4">
-            Sales Last 7 Days
-          </h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart
-              data={dailySalesData}
-              margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#2d2d2d" />
-              <XAxis dataKey="date" stroke="#8884d8" />
-              <YAxis stroke="#8884d8" />
-              <Tooltip />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="sales"
-                stroke="#FFA500"
-                strokeWidth={2}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </section>
       </main>
     </div>
   );

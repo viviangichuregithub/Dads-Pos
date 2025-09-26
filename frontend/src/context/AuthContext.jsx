@@ -5,13 +5,10 @@ import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 
 export const AuthContext = createContext();
-
 export function AuthProvider({ children }) {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // Load current authenticated user
   useEffect(() => {
     async function loadUser() {
       try {
@@ -25,33 +22,26 @@ export function AuthProvider({ children }) {
     }
     loadUser();
   }, []);
-
-  // Login function
   const login = async (email, password) => {
     try {
       const res = await api.post("/auth/login", { email, password });
       setUser(res.data.user);
-      return res.data.user; // can be used for role-based routing
+      return res.data.user; 
     } catch (err) {
       const msg = err.response?.data?.error || "Login failed";
       throw new Error(msg);
     }
   };
-
-  // Logout function
   const logout = async () => {
     try {
       await api.post("/auth/logout");
       setUser(null);
-      router.push("/auth/login"); // redirect to login page
+      router.push("/auth/login"); 
     } catch (err) {
       console.error("Logout failed:", err);
     }
   };
-
-  // Optional: helper for role-based routing
   const isAdmin = () => user?.role === "admin";
-
   return (
     <AuthContext.Provider value={{ user, loading, login, logout, isAdmin }}>
       {children}

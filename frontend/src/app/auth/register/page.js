@@ -14,7 +14,6 @@ export default function RegisterPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [success, setSuccess] = useState("");
 
-  // Validation schema using Yup
   const validationSchema = Yup.object({
     name: Yup.string().required("Full Name is required"),
     email: Yup.string().email("Invalid email").required("Email is required"),
@@ -30,7 +29,6 @@ export default function RegisterPage() {
       .oneOf([Yup.ref("password"), null], "Passwords must match")
       .required("Confirm password is required"),
   });
-
   const handleSubmit = async (values, { setSubmitting, setFieldError }) => {
     try {
       const payload = {
@@ -47,7 +45,6 @@ export default function RegisterPage() {
       setSubmitting(false);
     }
   };
-
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-black">
       <Formik

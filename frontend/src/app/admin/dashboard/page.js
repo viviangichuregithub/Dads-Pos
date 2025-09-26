@@ -227,16 +227,27 @@ export default function DashboardPage() {
         <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800">
           <h2 className="text-2xl font-semibold text-blue-500 mb-4">Sales & Expenses Last 7 Days</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={dailyData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#433b3bff" />
-              <XAxis dataKey="date" stroke="#8884d8" />
-              <YAxis stroke="#8884d8" />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="sales" stroke="#FB923C" strokeWidth={2} />
-              <Line type="monotone" dataKey="expenses" stroke="#FF4D4F" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
+  <LineChart 
+    data={dailyData} 
+    margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+  >
+    <CartesianGrid 
+      strokeDasharray="3 3" 
+      stroke="#433b3bff" 
+    />
+    <XAxis dataKey="date" stroke="#3B82F6" />
+    <YAxis stroke="#3B82F6" />
+    <Tooltip 
+      contentStyle={{ backgroundColor: "#111827" }}
+      itemStyle={{ color: "#f9fafb" }}
+      labelStyle={{ color: "#93c5fd" }}
+    />
+    <Legend wrapperStyle={{ color: "#f9fafb" }} />
+
+    <Line type="monotone" dataKey="sales" stroke="#FB923C" strokeWidth={2} />
+    <Line type="monotone" dataKey="expenses" stroke="#FF4D4F" strokeWidth={2} />
+  </LineChart>
+</ResponsiveContainer>
         </section>
       </main>
     </div>

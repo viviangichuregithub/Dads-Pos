@@ -39,8 +39,6 @@ export default function ProfileSettings({ profile, setProfile, updateProfile, up
         <User className="w-6 h-6 text-orange-400" />
         <h2 className="text-2xl font-bold text-orange-400">Profile Settings</h2>
       </div>
-
-      {/* Profile Picture and Basic Info */}
       <div className="flex flex-col md:flex-row items-center gap-6 md:gap-12">
         <div className="relative">
           <img
@@ -72,8 +70,6 @@ export default function ProfileSettings({ profile, setProfile, updateProfile, up
           <p className="text-gray-500 text-sm">{profile.email || "you@example.com"}</p>
         </div>
       </div>
-
-      {/* Personal Info Form */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm text-gray-400 mb-1">Full Name</label>
@@ -85,7 +81,6 @@ export default function ProfileSettings({ profile, setProfile, updateProfile, up
             className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-orange-500 outline-none text-gray-100 transition"
           />
         </div>
-
         <div>
           <label className="block text-sm text-gray-400 mb-1">Email Address</label>
           <input
@@ -96,7 +91,6 @@ export default function ProfileSettings({ profile, setProfile, updateProfile, up
             className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-orange-500 outline-none text-gray-100 transition"
           />
         </div>
-
         <div>
           <label className="block text-sm text-gray-400 mb-1">Phone Number</label>
           <div className="flex items-center bg-gray-800 border border-gray-700 rounded-lg px-3">
@@ -111,8 +105,6 @@ export default function ProfileSettings({ profile, setProfile, updateProfile, up
           </div>
         </div>
       </div>
-
-      {/* Gender */}
       <div>
         <label className="block text-sm text-gray-400 mb-1">Gender</label>
         <div className="flex items-center gap-4">
@@ -134,8 +126,6 @@ export default function ProfileSettings({ profile, setProfile, updateProfile, up
           ))}
         </div>
       </div>
-
-      {/* Save Profile Button */}
       <div className="flex justify-end">
         <button
           onClick={updateProfile}
@@ -145,8 +135,6 @@ export default function ProfileSettings({ profile, setProfile, updateProfile, up
           Save Changes
         </button>
       </div>
-
-      {/* Change Password Section */}
       <div className="mt-6 border-t border-gray-800 pt-4">
         <button
           className="w-full flex justify-between items-center px-4 py-2 bg-orange-500 hover:bg-orange-600 rounded-lg text-white font-medium transition"
@@ -155,7 +143,6 @@ export default function ProfileSettings({ profile, setProfile, updateProfile, up
           <span>Change Password</span>
           <span className={`transform transition-transform ${showPasswordForm ? "rotate-180" : "rotate-0"}`}>▼</span>
         </button>
-
         {showPasswordForm && (
           <div className="mt-4 space-y-4 max-w-md mx-auto">
             {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
@@ -194,7 +181,6 @@ export default function ProfileSettings({ profile, setProfile, updateProfile, up
                 </span>
               </div>
             ))}
-
             <div className="flex justify-end">
               <button
                 onClick={handlePasswordSubmit}

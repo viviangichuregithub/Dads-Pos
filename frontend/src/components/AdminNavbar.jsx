@@ -25,7 +25,6 @@ export default function AdminNavbar() {
     { name: "Sales", icon: <ShoppingCart size={18} />, href: "/admin/sales" },
     { name: "Inventory", icon: <Archive size={18} />, href: "/admin/inventory" },
     { name: "Expenses", icon: <FileText size={18} />, href: "/admin/expenses" },
-    { name: "Reports", icon: <FileText size={18} />, href: "/admin/reports" },
     { name: "Employees", icon: <Users size={18} />, href: "/admin/employee" },
     { name: "Settings", icon: <Settings size={18} />, href: "/admin/settings" },
   ];

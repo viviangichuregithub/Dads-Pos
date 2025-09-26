@@ -1,7 +1,6 @@
 // components/SummaryCard.jsx
 
 export default function SummaryCard({ title, value, color }) {
-  // Predefined color classes
   const presetColors = {
     blue: "text-blue-400 border-blue-500/30",
     green: "text-green-400 border-green-500/30",
@@ -9,8 +8,6 @@ export default function SummaryCard({ title, value, color }) {
     purple: "text-purple-400 border-purple-500/30",
     red: "text-red-400 border-red-500/30",
   };
-
-  // Determine if the color is a preset or a custom hex
   const colorClass = presetColors[color] || "";
 
   const customStyle = /^#/.test(color)

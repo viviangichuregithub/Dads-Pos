@@ -22,6 +22,7 @@ export default function InventoryPage() {
   const [editId, setEditId] = useState(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
   useEffect(() => {
     if (!loading && (!user || user.role !== "admin")) {
       router.push("/auth/login");
@@ -33,7 +34,7 @@ export default function InventoryPage() {
       const res = await api.get("/inventory/", {
         params: { name: search || undefined, page: pageNum, per_page: 10 },
       });
-      setInventory(res.data.items);     
+      setInventory(res.data.items);
       setPage(res.data.page);
       setTotalPages(res.data.pages);
     } catch (err) {
@@ -46,11 +47,13 @@ export default function InventoryPage() {
   useEffect(() => {
     if (user?.role === "admin") fetchInventory(1);
   }, [user, search]);
+
   const handleAdd = () => {
     setForm({ name: "", price: "", quantity: "" });
     setEditId(null);
     setModalOpen(true);
   };
+
   const handleEdit = (item) => {
     setForm({ name: item.name, price: item.price, quantity: item.quantity });
     setEditId(item.id);
@@ -85,7 +88,7 @@ export default function InventoryPage() {
       console.error(err);
       toast.error("Operation failed");
     }
-  }
+  };
   const handleInlineUpdate = async (id, data) => {
     try {
       await api.patch(`/inventory/${id}`, data);
@@ -100,7 +103,6 @@ export default function InventoryPage() {
     if (newPage < 1 || newPage > totalPages) return;
     fetchInventory(newPage);
   };
-
   const handleImport = async (file) => {
     if (!file) return toast.error("Please select a file");
     const formData = new FormData();
@@ -114,7 +116,6 @@ export default function InventoryPage() {
       toast.error("Failed to import Excel");
     }
   };
-
   const handleExport = async (type) => {
     try {
       const res = await api.get(`/inventory/export/${type}`, { responseType: "blob" });
@@ -130,7 +131,6 @@ export default function InventoryPage() {
       toast.error("Export failed");
     }
   };
-
   if (loading || dataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
@@ -138,7 +138,6 @@ export default function InventoryPage() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
       <AdminNavbar />
@@ -157,17 +156,44 @@ export default function InventoryPage() {
           onImport={handleImport}
           onExport={handleExport}
         />
-        <InventoryTable
-          inventory={inventory}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onInlineUpdate={handleInlineUpdate}
-        />
-
-        {/* Pagination */}
-        <div className="flex justify-center gap-2 mt-4">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left border-collapse border border-gray-700">
+            <thead className="bg-gray-800 text-gray-100">
+              <tr>
+                <th className="px-4 py-2 border border-gray-700">Name</th>
+                <th className="px-4 py-2 border border-gray-700">Price</th>
+                <th className="px-4 py-2 border border-gray-700">Quantity</th>
+                <th className="px-4 py-2 border border-gray-700">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="text-gray-300">
+              {inventory.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-800">
+                  <td className="px-4 py-2 border border-gray-700">{item.name}</td>
+                  <td className="px-4 py-2 border border-gray-700">Ksh {item.price}</td>
+                  <td className="px-4 py-2 border border-gray-700">{item.quantity}</td>
+                  <td className="px-4 py-2 border border-gray-700 flex flex-col sm:flex-row gap-2">
+                    <button
+                      className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-white w-full sm:w-auto"
+                      onClick={() => handleEdit(item)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-white w-full sm:w-auto"
+                      onClick={() => handleDelete(item.id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex justify-center gap-2 mt-4 flex-wrap">
           <button
-            className="px-3 py-1 bg-gray-800 rounded"
+            className="px-3 py-1 bg-gray-800 rounded disabled:opacity-50"
             onClick={() => handlePageChange(page - 1)}
             disabled={page <= 1}
           >
@@ -177,7 +203,7 @@ export default function InventoryPage() {
             Page {page} of {totalPages}
           </span>
           <button
-            className="px-3 py-1 bg-gray-800 rounded"
+            className="px-3 py-1 bg-gray-800 rounded disabled:opacity-50"
             onClick={() => handlePageChange(page + 1)}
             disabled={page >= totalPages}
           >

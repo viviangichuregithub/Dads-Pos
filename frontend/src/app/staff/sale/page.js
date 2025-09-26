@@ -18,6 +18,7 @@ export default function StaffSalesPage() {
   const [perPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalSales, setTotalSales] = useState(0);
+
   const fetchInventory = async () => {
     try {
       const res = await api.get("/inventory/", { params: { page: 1, per_page: 100 } });
@@ -27,6 +28,7 @@ export default function StaffSalesPage() {
       toast.error("Failed to fetch inventory");
     }
   };
+
   const fetchSales = async (pageNum = 1, date = selectedDate) => {
     try {
       setDataLoading(true);
@@ -38,8 +40,7 @@ export default function StaffSalesPage() {
       setSales(fetchedSales);
       setPage(res.data.page || pageNum);
       setTotalPages(res.data.pages || 1);
-      const total = fetchedSales.reduce((sum, sale) => sum + sale.total, 0);
-      setTotalSales(total);
+      setTotalSales(fetchedSales.reduce((sum, sale) => sum + sale.total, 0));
     } catch (err) {
       console.error(err);
       toast.error("Failed to fetch sales");
@@ -47,23 +48,29 @@ export default function StaffSalesPage() {
       setDataLoading(false);
     }
   };
+
   useEffect(() => {
     if (!authLoading && user) {
       fetchInventory();
       fetchSales(1, selectedDate);
     }
   }, [user]);
+
   useEffect(() => {
     if (user) fetchSales(1, selectedDate);
   }, [selectedDate, user]);
+
   const handleDateChange = (e) => setSelectedDate(e.target.value);
+
   const handleItemChange = (index, field, value) => {
     const newItems = [...saleItems];
     newItems[index][field] = field === "quantity" ? parseInt(value) : value;
     setSaleItems(newItems);
   };
+
   const addSaleItemRow = () => setSaleItems([...saleItems, { inventory_id: "", quantity: 1 }]);
   const removeSaleItemRow = (index) => setSaleItems(saleItems.filter((_, i) => i !== index));
+
   const handleSubmitSale = async (e) => {
     e.preventDefault();
     try {
@@ -71,16 +78,18 @@ export default function StaffSalesPage() {
       await api.post("/sales/", payload);
       toast.success("Sale recorded!");
       setSaleItems([{ inventory_id: "", quantity: 1 }]);
-      fetchSales(page, selectedDate); 
+      fetchSales(page, selectedDate);
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.error || "Failed to create sale");
     }
   };
+
   const handlePageChange = (newPage) => {
     if (newPage < 1 || newPage > totalPages) return;
     fetchSales(newPage, selectedDate);
   };
+
   if (authLoading || dataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
@@ -88,37 +97,45 @@ export default function StaffSalesPage() {
       </div>
     );
   }
+
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
       <StaffNavbar />
-      <main className="p-6 md:p-10 space-y-10">
-        <header className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 flex items-center gap-3">
-          <Wallet className="w-8 h-8 text-orange-400" />
-          <div>
-            <h1 className="text-3xl font-bold text-blue-500">Sales</h1>
-            <p className="text-gray-400 mt-1">Record and view your sales for a specific day.</p>
+      <main className="p-6 md:p-10 space-y-10 max-w-7xl mx-auto">
+        {/* Header */}
+        <header className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 flex flex-col md:flex-row md:items-center gap-3 md:justify-between">
+          <div className="flex items-center gap-3">
+            <Wallet className="w-8 h-8 text-orange-400" />
+            <div>
+              <h1 className="text-3xl font-bold text-blue-500">Sales</h1>
+              <p className="text-gray-400 mt-1">Record and view your sales for a specific day.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 mt-3 md:mt-0">
+            <Calendar className="w-5 h-5 text-gray-400" />
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={handleDateChange}
+              className="px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100"
+            />
           </div>
         </header>
-        <section className="flex items-center gap-3">
-          <Calendar className="w-5 h-5 text-gray-400" />
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={handleDateChange}
-            className="px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100"
-          />
-        </section>
-        <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 max-w-2xl flex justify-between items-center">
+
+        {/* Total Sales Card */}
+        <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4">
           <span className="text-gray-300">Total Sales for {selectedDate}:</span>
           <span className="text-2xl font-bold text-orange-400">Ksh {totalSales.toFixed(2)}</span>
         </section>
-        <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 max-w-2xl">
+
+        {/* Record New Sale Form */}
+        <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800">
           <h2 className="text-2xl font-semibold text-orange-400 mb-6 flex items-center gap-2">
             <Plus className="w-5 h-5" /> Record New Sale
           </h2>
           <form className="space-y-4" onSubmit={handleSubmitSale}>
             {saleItems.map((item, index) => (
-              <div key={index} className="flex gap-3 items-center">
+              <div key={index} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
                 <select
                   value={item.inventory_id}
                   onChange={(e) => handleItemChange(index, "inventory_id", e.target.value)}
@@ -151,7 +168,7 @@ export default function StaffSalesPage() {
                 )}
               </div>
             ))}
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 mt-2">
               <button type="button" onClick={addSaleItemRow} className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700">
                 Add Another Item
               </button>
@@ -161,12 +178,14 @@ export default function StaffSalesPage() {
             </div>
           </form>
         </section>
+
+        {/* Sales List */}
         <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {sales.length === 0 && (
             <p className="text-gray-400 text-center col-span-full">No sales found for this date.</p>
           )}
           {sales.map((sale) => (
-            <div key={sale.id} className="bg-gray-900 p-4 rounded-xl shadow-md border border-gray-800">
+            <div key={sale.id} className="bg-gray-900 p-4 rounded-xl shadow-md border border-gray-800 flex flex-col">
               <p className="text-gray-300 mb-1">
                 Total: <span className="font-bold text-orange-400">Ksh {sale.total.toFixed(2)}</span>
               </p>
@@ -186,9 +205,11 @@ export default function StaffSalesPage() {
             </div>
           ))}
         </section>
+
+        {/* Pagination */}
         <div className="flex justify-center gap-2 mt-4">
           <button
-            className="px-3 py-1 bg-gray-800 rounded"
+            className="px-3 py-1 bg-gray-800 rounded disabled:opacity-50"
             onClick={() => handlePageChange(page - 1)}
             disabled={page <= 1}
           >
@@ -198,7 +219,7 @@ export default function StaffSalesPage() {
             Page {page} of {totalPages}
           </span>
           <button
-            className="px-3 py-1 bg-gray-800 rounded"
+            className="px-3 py-1 bg-gray-800 rounded disabled:opacity-50"
             onClick={() => handlePageChange(page + 1)}
             disabled={page >= totalPages}
           >

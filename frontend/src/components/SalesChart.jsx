@@ -10,9 +10,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
-
 export default function SalesChart({ sales }) {
   const data = {
     labels: sales.map((s) => s.time),
@@ -30,7 +28,6 @@ export default function SalesChart({ sales }) {
       },
     ],
   };
-
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -79,7 +76,6 @@ export default function SalesChart({ sales }) {
       },
     },
   };
-
   return (
     <div className="h-96">
       <Line data={data} options={options} />

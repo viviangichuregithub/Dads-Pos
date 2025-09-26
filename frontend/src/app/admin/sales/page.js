@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Wallet, Calendar } from "lucide-react";
+import { Plus, Trash2, Wallet, Calendar, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "../../../hooks/useAuth";
 import { useRouter } from "next/navigation";
 import AdminNavbar from "../../../components/AdminNavbar";
@@ -20,12 +20,13 @@ export default function SalesPage() {
   const [perPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [expandedSales, setExpandedSales] = useState({});
+
   useEffect(() => {
     if (!loading && (!user || user.role !== "admin")) {
       router.push("/auth/login");
     }
   }, [user, loading, router]);
-
   const fetchInventory = async () => {
     try {
       const res = await api.get("/inventory/", { params: { page: 1, per_page: 100 } });
@@ -65,7 +66,6 @@ export default function SalesPage() {
   };
   const addSaleItemRow = () => setSaleItems([...saleItems, { inventory_id: "", quantity: 1 }]);
   const removeSaleItemRow = (index) => setSaleItems(saleItems.filter((_, i) => i !== index));
-
   const handleSubmitSale = async (e) => {
     e.preventDefault();
     try {
@@ -82,6 +82,9 @@ export default function SalesPage() {
     if (newPage < 1 || newPage > totalPages) return;
     fetchSales(newPage);
   };
+  const toggleSaleExpand = (id) => {
+    setExpandedSales((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
   if (loading || dataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
@@ -92,7 +95,7 @@ export default function SalesPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
       <AdminNavbar />
-      <main className="p-6 md:p-10 space-y-10">
+      <main className="p-6 md:p-10 space-y-10 max-w-7xl mx-auto">
         <header className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-3">
             <Wallet className="w-8 h-8 text-orange-400" />
@@ -111,13 +114,9 @@ export default function SalesPage() {
             />
           </div>
         </header>
-        <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 flex justify-between items-center max-w-2xl">
-          <span className="text-lg font-medium text-gray-300">
-            Total Sales for {date}:
-          </span>
-          <span className="text-2xl font-bold text-orange-400">
-            Ksh {totalSales.toFixed(2)}
-          </span>
+        <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4 max-w-2xl">
+          <span className="text-lg font-medium text-gray-300">Total Sales for {date}:</span>
+          <span className="text-2xl font-bold text-orange-400">Ksh {totalSales.toFixed(2)}</span>
         </section>
         <section className="bg-gray-900 rounded-xl p-6 shadow-lg border border-gray-800 max-w-2xl">
           <h2 className="text-2xl font-semibold text-orange-400 mb-6 flex items-center gap-2">
@@ -125,7 +124,7 @@ export default function SalesPage() {
           </h2>
           <form className="space-y-4" onSubmit={handleSubmitSale}>
             {saleItems.map((item, index) => (
-              <div key={index} className="flex gap-3 items-center">
+              <div key={index} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
                 <select
                   value={item.inventory_id}
                   onChange={(e) => handleItemChange(index, "inventory_id", e.target.value)}
@@ -144,31 +143,31 @@ export default function SalesPage() {
                   min="1"
                   value={item.quantity}
                   onChange={(e) => handleItemChange(index, "quantity", e.target.value)}
-                  className="w-24 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full sm:w-24 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
                   required
                 />
                 {saleItems.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeSaleItemRow(index)}
-                    className="p-2 rounded-lg hover:bg-red-900 text-red-500 transition"
+                    className="p-2 rounded-lg hover:bg-red-900 text-red-500 transition mt-2 sm:mt-0"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 )}
               </div>
             ))}
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 mt-4 justify-start sm:justify-end">
               <button
                 type="button"
                 onClick={addSaleItemRow}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg"
+                className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white transition"
               >
                 Add Another Item
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg"
+                className="w-full sm:w-auto px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white transition"
               >
                 Submit Sale
               </button>
@@ -176,46 +175,39 @@ export default function SalesPage() {
           </form>
         </section>
         <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {sales.length === 0 && (
-            <p className="text-gray-400 text-center col-span-full">No sales found.</p>
-          )}
+          {sales.length === 0 && <p className="text-gray-400 text-center col-span-full">No sales found.</p>}
           {sales.map((sale) => (
-            <div key={sale.id} className="bg-gray-900 p-4 rounded-xl shadow-md border border-gray-800">
-              <p className="text-gray-300 mb-1">
-                Total: <span className="font-bold text-orange-400">Ksh {sale.total.toFixed(2)}</span>
-              </p>
-              <p className="text-gray-400 text-sm mb-2">
-                Date: {new Date(sale.created_at).toLocaleString()}
-              </p>
-              <div>
-                <h4 className="font-medium text-gray-300 mb-1">Items:</h4>
-                <ul className="text-gray-400 text-sm list-disc ml-5">
-                  {sale.items.map((item) => (
-                    <li key={item.inventory_id}>
-                      Inventory {item.inventory_id}: {item.quantity} x Ksh {item.price.toFixed(2)}
-                    </li>
-                  ))}
-                </ul>
+            <div key={sale.id} className="bg-gray-900 p-4 rounded-xl shadow-md border border-gray-800 flex flex-col">
+              <div className="flex justify-between items-center">
+                <p className="text-gray-300 mb-1">
+                  Total: <span className="font-bold text-orange-400">Ksh {sale.total.toFixed(2)}</span>
+                </p>
+                <button onClick={() => toggleSaleExpand(sale.id)} className="p-1 text-gray-400 hover:text-orange-400">
+                  {expandedSales[sale.id] ? <ChevronUp /> : <ChevronDown />}
+                </button>
               </div>
+              <p className="text-gray-400 text-sm mb-2">Date: {new Date(sale.created_at).toLocaleString()}</p>
+              {expandedSales[sale.id] && (
+                <div>
+                  <h4 className="font-medium text-gray-300 mb-1">Items:</h4>
+                  <ul className="text-gray-400 text-sm list-disc ml-5">
+                    {sale.items.map((item) => (
+                      <li key={item.inventory_id}>
+                        Inventory {item.inventory_id}: {item.quantity} x Ksh {item.price.toFixed(2)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           ))}
         </section>
-        <div className="flex justify-center gap-2 mt-4">
-          <button
-            className="px-3 py-1 bg-gray-800 rounded"
-            onClick={() => handlePageChange(page - 1)}
-            disabled={page <= 1}
-          >
+        <div className="flex justify-center gap-2 mt-4 flex-wrap">
+          <button className="px-3 py-1 bg-gray-800 rounded disabled:opacity-50" onClick={() => handlePageChange(page - 1)} disabled={page <= 1}>
             Prev
           </button>
-          <span className="px-3 py-1">
-            Page {page} of {totalPages}
-          </span>
-          <button
-            className="px-3 py-1 bg-gray-800 rounded"
-            onClick={() => handlePageChange(page + 1)}
-            disabled={page >= totalPages}
-          >
+          <span className="px-3 py-1">Page {page} of {totalPages}</span>
+          <button className="px-3 py-1 bg-gray-800 rounded disabled:opacity-50" onClick={() => handlePageChange(page + 1)} disabled={page >= totalPages}>
             Next
           </button>
         </div>
